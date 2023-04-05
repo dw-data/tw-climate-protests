@@ -2,26 +2,44 @@
 
 ## Project overview
 
-...
-...
-...
+This repository contains the source code for DW's story about climate protests on Twitter.
 
+---
+
+## Brief methodological description
+
+For this story, we collected all tweets published between Aug. 20, 2018 and Feb. 18, 2023. 
+by the 30 English-language news organizations with the most followers on Twitter.
+
+We then computed the total engagement numbers (that is, the sum of retweets, quote tweets, replies and likes received by each tweet) for each post. We also computed a relative measurement of engagement – that is, in which percentile of the total engagement metric each tweet was, in comparison to the tweets published by the same news organization in the same week.
+
+All of the nearly 4,3 million tweets retrieved were then searched for keywords related to climate and environmental protests. As a result, 3,636 tweets were marked as of potential interest. Those tweets were then manually reviewed in order to discard any false positives. 
+
+Moreover, the tweets that really refered to climate change were classified in two distinct categories: "non-disruptive" and "disruptive". The "non-disruptive" label refers to tweets about acts such as defacing monuments, buildings or art pieces, storming public buildings, occupying public spaces without clearence, blocking traffic, clashing with security forces, interrupting events, and similar actions. The "disruptive" label refers to tweets about activist participation in institutional forums, public speeches, interviews by activists, pacific rallies, artistic interventions, and the like.
+
+We then selected all the tweets from this two categories that were among the highest engagement percentile, as well as a random sample of high engagement tweets that didn't mention climate change. All the direct replies to those tweets were also collected.
+
+We then used two language processing models (available [here](https://huggingface.co/papluca/xlm-roberta-base-language-detection) and [here](https://huggingface.co/siebert/sentiment-roberta-large-english), respectively) to analyze those replies. We first removed from the data all tweets that were in a language other than English. Then, we classified each reply as displaying positive or negative sentiment. The results of the sentiment analysis were then used to measure how much negativity each of the original tweets generated.
+
+A detailed description of the process can be found below.
+
+---
 
 ## Code structure
 
 ### Data preparation
 
-#### 1-collect.py
-This script will collect the content and engagement numbers for the tweets we used in the analysis using the Python package SNscraper. It saves data for each of the relevant accounts into a separate JSON file.
+#### 1.collect.py
+This script collects content and engagement numbers for the tweets we used in the analysis using the Python package SNscraper. It saves the data for each of the news organizations into a separate JSON file.
 
 #### 2.concatenate-and-compute.ipynb
-In this notebook, we read the JSON files saved previously, joining them together and turining them into a pandas dataframe. Then, we compute the aggregate fields that were used for the data analysis later – namely, the relative engagement rates of each tweet when compared to the ones published in the same week by the same news organization.
+In this notebook, we read the JSON files saved previously, joining them together and turining them into a pandas dataframe. Then, we compute the aggregate fields that were used for the data analysis later – most importantly, the relative engagement rates of each tweet when compared to the ones published in the same week by the same news organization.
 
 #### 3.detect-keywords.ipynb
-In this script, we define two lists of keywords, one related to climate change and the other related to protests in general. We then use it to detect tweets that mention at least one word in each list at each time. This approach allows to find tweets that are not only about protests in general or environmental issues in general. Instead, we select only those that mention both. It also allow us to lower the number of false positives detected.
+In this script, we define two lists of keywords, one related to climate change and the other related to protests in general. We then use it to detect tweets that mention at least one word in both lists.
 
 #### 4.manually-categorize.py
-This script prompts the user to manually classify the tweets selected above into three categories.
+This script was used as a helper to manually classify the tweets selected above into three categories.
 	a. *"nd"*: tweets that mention non-disruptive climate protests (such as activist participation in institutional forums, public speeches, interviews by activists, rallies, and artistic interventions).
 	b. *"d"*: tweets that mention disruptive ones (such as defacing monuments or art pieces, storming public buildings, occupying public spaces without clearence, blocking traffic, clashes with security forces, disruption of events and rallies by groups that promote civil desobedience tactics). 
 	c. **"fp"**: tweets that were selected because they mention specific keywords, but don't actually refer to climate protests.
@@ -38,7 +56,9 @@ This script collects all the replies to a random sample of 100 similarly high en
 #### 8.prepare-dfs-for-sentiment-analysis.ipynb
 This notebooks takes the tweets collected in steps 6 and 7, formats them and saves them as CSVs that can go through a sentiment analysis algorithm.
 
-**The following steps were run in a Google Colab environment, since they were computationally heavy.** To do so, the files in the output directory `8.dfs-for-sentiment-analysis` were uploaded to Google Drive and accessed programatically using Google Colab notebooks. You can find copies of the notebooks that ran in Google Colab in the repository.
+---
+
+**The following steps were run in a Google Colab environment, since they were computationally heavy.** To do so, the files in the output directory `8.dfs-for-sentiment-analysis` were uploaded to Google Drive and accessed programatically using Google Colab notebooks. In this repository, you can find copies of the notebooks that ran in Google Colab environment.
 
 #### 9.high_engagement_language_detect.ipynb
 This script uses a natural language processing model to detect the language of the replies to the high engagement climate protest tweets. The model used is `papluca/xlm-roberta-base-language-detection`, which is available for public use at [HuggingFace](https://huggingface.co/papluca/xlm-roberta-base-language-detection).
@@ -53,7 +73,9 @@ Almost identical to script 9, but it runs the NLP model on the replies to the ra
 Almost identical to script 10, but it runs the NLP model on the replies to the randomly selected tweets.
 
 #### 13.export_sentiment_analysis_dfs.ipynb
-Creates CSVs for each one of the sentiment analysis, so we can analyze and visualize the data.
+Creates CSVs for each one of the sentiment analysis, so we could later analyze and visualize the data.
+
+---
 
 ### Analysis and data visualization
 
@@ -63,7 +85,7 @@ In this script, we discover and visualize how the coverage and engagement of cli
 #### b.engagement-distribution.ipynb
 This script prepares the data for use in the swarm plots that show the distribution of tweets according to their engagement levels.
 
-#### c.greta-is-everywhere.ipynb
+#### c.greta-thunberg.ipynb
 Simple calculation of how many times Greta Thunberg is mentioned on each kind of climate protest tweet.
 
 #### d.sentiment-analysis.ipynb
