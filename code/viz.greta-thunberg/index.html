@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stacked Bar Charts</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        .bar {
+            fill: steelblue;
+        }
+    </style>
+</head>
+<body>
+    <div id="chart"></div>
+    <script>
+
+        /* This script was written with the help of GPT4 */
+
+        const data = [
+            { label: "All tweets that mention climate protests, ", value: 30 },
+            { label: "Only tweets among the 25% more engaging", value: 47 },
+            { label: "Only tweets among the 10% more engaging", value: 59 },
+            { label: "Only tweets among the 1% more engaging", value: 67 },
+        ];
+
+        const svgWidth = 320;
+        const svgHeight = 300;
+        const barHeight = 25;
+        const barPadding = 40;
+        const marginTop = 20;
+
+        const xScale = d3.scaleLinear()
+            .domain([0, 100])
+            .range([0, svgWidth]);
+
+        const chart = d3.select("#chart")
+            .append("svg")
+            .attr("width", svgWidth)
+            .attr("height", svgHeight);
+
+        data.forEach((d, i) => {
+            const yPos = i * (barHeight + barPadding) + marginTop;
+
+            chart.append("text")
+                .attr("x", 0)
+                .attr("y", yPos - 5)
+                .text(d.label);
+
+            // Grey rectangle under the actual bar chart
+            chart.append("rect")
+                .attr("x", 0)
+                .attr("y", yPos)
+                .attr("width", svgWidth)
+                .attr("height", barHeight)
+                .attr("fill", "#d3d3d3");
+
+            // Actual bar chart
+            chart.append("rect")
+                .attr("class", "bar")
+                .attr("x", 0)
+                .attr("y", yPos)
+                .attr("width", xScale(d.value))
+                .attr("height", barHeight);
+
+            // Value label on top of the blue bar
+            chart.append("text")
+                .attr("x", xScale(d.value) - 32)
+                .attr("y", yPos + barHeight / 2)
+                .attr("dy", ".35em")
+                .text(`${d.value}%`);
+        });
+
+    </script>
+</body>
+</html>

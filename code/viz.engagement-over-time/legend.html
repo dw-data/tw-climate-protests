@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Continuous Color Legend</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+</head>
+<body>
+    <svg id="legend" width="500" height="100"></svg>
+
+    <script>
+        // Sample data
+        const data = [
+            { high_engagement_climate_tweets: 10, total_climate_tweets: 100 },
+            { high_engagement_climate_tweets: 20, total_climate_tweets: 200 },
+            { high_engagement_climate_tweets: 30, total_climate_tweets: 300 },
+        ];
+
+        // Your existing color scale
+        const colorScale = d3.scaleLinear()
+            .domain(d3.extent(data, d => d.high_engagement_climate_tweets / d.total_climate_tweets))
+            .range(["#bfc7ce", "#00a5ff"]);
+
+        // Continuous color legend
+        const legendWidth = 400;
+        const legendHeight = 20;
+        const legendX = 50;
+        const legendY = 50;
+
+        const svg = d3.select("#legend");
+        const defs = svg.append("defs");
+
+        const gradient = defs.append("linearGradient")
+            .attr("id", "gradient")
+            .attr("x1", "0%")
+            .attr("y1", "0%")
+            .attr("x2", "100%")
+            .attr("y2", "0%");
+
+        gradient.selectAll("stop")
+            .data(colorScale.range())
+            .enter().append("stop")
+            .attr("offset", (d, i) => (i / (colorScale.range().length - 1)) * 100 + "%")
+            .attr("stop-color", d => d);
+
+        svg.append("rect")
+            .attr("x", legendX)
+            .attr("y", legendY)
+            .attr("width", legendWidth)
+            .attr("height", legendHeight)
+            .style("fill", "url(#gradient)");
+
+        const legendScale = d3.scaleLinear()
+            .domain(colorScale.domain())
+            .range([0, legendWidth]);
+
+        const legendAxis = d3.axisBottom(legendScale);
+
+        svg.append("g")
+            .attr("transform", `translate(${legendX}, ${legendY + legendHeight})`)
+            .call(legendAxis);
+    </script>
+</body>
+</html>

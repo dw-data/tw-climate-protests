@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Swarmplot Example</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      :root {
+        --background-gray: #f1f3f5;
+      }
+
+      svg {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        background-color: var(--background-gray);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Swarmplot Example</h1>
+    <div id="chart"></div>
+    <div id="nd-chart"></div>
+    <div id="d-chart"></div>
+    <script>
+
+      /* This script was written with the help of GPT4 */
+
+      // Colors
+      const colors = {
+        "all": "#002d5a",
+        "nd": "#00a5ff",
+        "d": "#eb6e14"
+      }
+
+      // manually gets some tweets at different engagement levels to highlight
+      to_highlight = [ 
+        // Van Gogh soup
+        "1580954080729522179",
+        // Greta's at United Nations – how dare you
+        "1176148556345774085",
+        // Glueing in musems
+        "1544276027760943105",
+        // Greta first school strike
+        "1038014689836498945"
+
+        ]
+
+      to_highlight_nd = [
+       // Greta's at United Nations – how dare you
+        "1176148556345774085",
+        // Thousands rally in Glagsgow
+        "1457023751678201866",
+        // Greta first school strike
+        "1038014689836498945"
+        ]
+
+      to_highlight_d = [
+        // Van Gogh soup
+        "1580954080729522179",
+        // Extinction Rebellion blocks traffic in London
+        "1150789693543518208",
+        // Two environmental activists glued themselves to a dinosaur display at Berlin’s Natural History Museum 
+        "1586776243084689410"
+        ]
+
+      // set up dimensions and margins for the plot
+      const width = 280;
+      const height = 650;
+      const margin = {top: 100, right: 100, bottom: 100, left: 120};
+      const innerWidth = width - margin.left - margin.right;
+      const innerHeight = height - margin.top - margin.bottom;
+
+    // load the data from the CSV file
+    d3.csv("data.csv").then(data => {
+
+      console.log(data);
+
+      // Sort the data array based on whether the tweet_id is in the to_highlight array
+      // This should prevent highlights to be buried down
+      data.sort((a, b) => {
+        const aIsHighlighted = to_highlight.includes(a.tweet_id);
+        const bIsHighlighted = to_highlight.includes(b.tweet_id);
+        return aIsHighlighted === bIsHighlighted ? 0 : (aIsHighlighted ? 1 : -1);
+      });
+
+      // create a new data array with only 'nd' classified items
+      const ndData = data.filter(d => d.classification === 'nd');
+
+      // create a new data array with only 'd' classified items
+      const dData = data.filter(d => d.classification === 'd');
+
+      // create an svg element for the larger chart
+      const svg = d3.select("#chart")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      // create an SVG element for the 'nd' chart
+      const ndSvg = d3.select("#nd-chart")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(" + margin.left / 2 + "," + margin.top / 2 + ")");
+
+      // create an SVG element for the 'd' chart
+      const dSvg = d3.select("#d-chart")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(" + margin.left / 2 + "," + margin.top / 2+ ")");
+
+      // create x scale for percentile_for_total_engagement
+      const yScale = d3.scaleLinear()
+        .domain([0, 100])
+        .range([0, innerHeight]);
+
+
+      const colorScale = d3.scaleLinear()
+        .domain([2019, 2020, 2021, 2022, 2023])
+        .range(["lightred", "darkred"])
+
+      // set up force simulation for clustering dots in y axis
+      const simulation = d3.forceSimulation(data)
+        .force("y", d3.forceY(d => yScale(d.percentile_for_total_engagement)).strength(6))
+        .force("x", d3.forceX(innerWidth/2))
+        .force("collide", d3.forceCollide(2.2))
+        .stop();
+
+      const dSimulation = d3.forceSimulation(dData)
+        .force("y", d3.forceY(d => yScale(d.percentile_for_total_engagement)).strength(6))
+        .force("x", d3.forceX(innerWidth/2))
+        .force("collide", d3.forceCollide(2.2))
+        .stop();
+
+      const ndSimulation = d3.forceSimulation(ndData)
+        .force("y", d3.forceY(d => yScale(d.percentile_for_total_engagement)).strength(6))
+        .force("x", d3.forceX(innerWidth/2))
+        .force("collide", d3.forceCollide(2.2))
+        .stop();
+
+
+      /// Draws the first chart
+      for (let i = 0; i < 500; ++i) {
+        console.log(i);
+        simulation.tick();
+      }
+
+      let circleHolder = svg.append("g")
+        .attr("class", "circle-holder");
+
+      circleHolder.selectAll(".dot")
+        .data(data)
+        .enter().append("circle")
+        .attr("class", "dot")
+        .attr("r", 2)
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
+        // .style("fill", d => to_highlight.includes(d.tweet_id) ? colors['all'] : "#bfc7ce")
+        .style("fill", "#bfc7ce")
+        // .attr("opacity", d => to_highlight.includes(d.tweet_id) ? 1 : .4)
+        .attr("stroke", "#f1f3f5")
+        .attr("stroke-width", 1)
+        .on('click', function(event, d) {
+          console.log(d);
+        })
+
+      // Create y axis with only the first and last ticks
+      const yAxis = d3.axisLeft(yScale)
+        .tickValues([0, 100])
+        .tickSizeOuter(0); // This removes the outer ticks
+
+      // // Append y axis to SVG, position it in the center, and remove the spine
+      // svg.append('g')
+      //   .attr('class', 'y-axis')
+      //   .attr('transform', `translate(${-margin.left}}, 0)`)
+      //   .call(yAxis)
+      //   .call(g => g.select(".domain").remove()); // This removes the spine
+
+
+      /// Draws the second chart
+      for (let i = 0; i < 500; ++i) {
+        console.log(i);
+        ndSimulation.tick();
+      }
+
+      // add the 'nd' dots to the 'nd' chart
+      let ndCircleHolder = ndSvg.append("g")
+
+      ndCircleHolder.selectAll(".nd-dot")
+        .data(ndData)
+        .enter().append("circle")
+        .attr("class", "nd-dot")
+        .attr("r", 2)
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
+        .style("fill", colors['nd'])
+        .attr("opacity", d => to_highlight_nd.includes(d.tweet_id) ? 1 : .4)
+        .attr("stroke", d => to_highlight_nd.includes(d.tweet_id) ? "#000" : "#f1f3f5")
+        .attr("stroke-width", 1)
+        .on('click', function(event, d) {
+          console.log(d);
+        })
+
+      /// Draws the third chart
+      for (let i = 0; i < 500; ++i) {
+        console.log(i);
+        dSimulation.tick();
+      }
+
+      // add the 'd' dots to the 'd' chart
+      let dSvgCircleHolder = dSvg.append("g")
+
+      dSvgCircleHolder.selectAll(".d-dot")
+        .data(dData)
+        .enter().append("circle")
+        .attr("class", "d-dot")
+        .attr("r", 2)
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
+        .style("fill", colors["d"])        
+        .attr("opacity", d => to_highlight_d.includes(d.tweet_id) ? 1 : .4)
+        .attr("stroke", d => to_highlight_d.includes(d.tweet_id) ? "#000" : "#f1f3f5")
+        .attr("stroke-width", 1)
+        .on('click', function(event, d) {
+          console.log(d);
+        })
+
+
+
+    });
+    </script>
+  </body>
+</html>
+
+
+

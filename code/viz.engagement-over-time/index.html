@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Scatter Plot with d3 and CSV Data</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+
+      :root {
+        --background-gray: #f1f3f5;
+      }
+
+      svg.chart {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        background-color: var(--background-gray);
+      }
+      circle {
+        cursor: pointer;
+      }
+      circle:hover {
+        fill-opacity: 1;
+        stroke-width: 2;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Scatter Plot with d3 and CSV Data</h1>
+    <div id="chart"></div>
+    <script>
+
+      /* This script was written with the help of GPT4 */
+
+
+      // Define the dimensions of the SVG element and the margins
+      const margin = { top: 120, right: 30, bottom: 30, left: 60 };
+      const height = 400;
+      const width = 1000;
+      const innerHeight = height - margin.top - margin.bottom;
+      const innerWidth = width - margin.left - margin.right;
+
+      // Create the SVG element and append it to the DOM
+      const svg = d3.select("#chart")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("class", "chart")
+        .append("g")
+        .attr("transform", `translate(${margin.left}, ${margin.top})`)
+
+      // Load the data from the local CSV file
+      Promise.all([
+        d3.csv("data.csv"),
+        d3.csv("tweets.csv"),
+      ]).then(dataArray => {
+      
+
+        data = dataArray[0];
+        tweets = dataArray[1]; 
+
+        data.sort((a, b) => {
+          return b.total_climate_tweets - a.total_climate_tweets;
+        });
+
+        console.log(data);
+
+        // Convert the string values to numbers
+        data.forEach(function(d) {
+          d.year = +d.year;
+          d.week = +d.week;
+          d.total_climate_tweets = +d.total_climate_tweets;
+          d.total_tweets = +d.total_tweets;
+          d.high_engagement_climate_tweets = +d.high_engagement_climate_tweets;
+        });
+
+
+        console.log(d3.map(data, d => d.year))
+
+        // Define the scales for the x-axis and y-axis
+        const x = d3.scaleLinear().domain(d3.extent(data, d => d.week)).range([0, innerWidth]);
+        const y = d3.scalePoint()
+          .domain([2018, 2019, 2020, 2021, 2022, 2023])
+          .range([0, innerHeight]);
+        const r = d3.scaleSqrt()
+          .domain([0, d3.max(data, d => d.total_climate_tweets)])
+          .range([0, 15]);
+        const time = d3.scaleTime()
+          .domain([new Date("2023-01-01"), new Date("2023-12-31")])
+          .range([0, innerWidth]);
+        const colorScale = d3.scaleLinear()
+          .domain(d3.extent(data, d => d.high_engagement_climate_tweets / d.total_climate_tweets))
+          .range(["#bfc7ce", "#00a5ff"]);
+
+        // Add the x-axis and y-axis to the SVG element
+
+        // Define tick values for January and December
+        const tickValues = [
+          new Date(2023, 0, 1), // January
+          new Date(2023, 11, 31) // December
+        ];
+
+
+        // Define the x-axis as a time axis, with monthly ticks
+        var xAxis = d3.axisBottom(time)
+            .tickFormat(d3.timeFormat("%b")) // Format the tick labels as abbreviated month names
+            .tickValues(tickValues);
+            //.ticks(d3.timeMonth.every(1)); // Show one tick per month
+
+        svg.append("g")
+          .attr("transform", `translate(0, ${innerHeight + margin.bottom / 2 - 5})`)
+          .call(xAxis)
+          .select(".domain") // Select the axis line
+          .remove(); // Remove the axis line
+        svg.append("g")
+          .attr("transform", `translate(${margin.left - 70},0)`)
+          .call(d3.axisLeft(y))
+          .select(".domain") // Select the axis line
+          .remove(); // Remove the axis line
+
+        // Define the circles for the chart
+        const circles = svg.selectAll("circle")
+          .data(data)
+          .enter()
+          .append("circle")
+          .attr("cx", d => x(d.week))
+          .attr("cy", d => y(d.year))
+          .attr("r", d => r(d.total_climate_tweets))
+          .attr("fill", d => colorScale(d.high_engagement_climate_tweets / d.total_climate_tweets)) 
+          //.attr("opacity", 0.7 )
+          .attr("opacity", 1 )
+          .attr("stroke", d => d3.rgb(colorScale  (d.high_engagement_climate_tweets / d.total_climate_tweets)).darker(.3))
+          .attr("stroke-opacity", 1)
+          .on("click", function(obj,d) {
+
+            var weekly_tweets = tweets.filter(t => t.week_id === d.week_id);
+            var string = d.datetime + "\n\n" + weekly_tweets.map(t =>`${t.tweet_id}\n${t.datetime} ${t.raw_content}\n\n\n`);
+
+            alert(string);
+      
+          });
+
+
+        // Add interactivity to the chart
+        circles.on("mouseover", function(d,i) {
+          console.log(d, i)
+          d3.select(this).attr("stroke-width", 2);
+        })
+        .on("mouseout", function(d,i) {
+          d3.select(this).attr("stroke-width", 0.5);
+        });
+
+        // LEGENDS
+
+        // Size legend
+        const legendValues = [1, 100]; // Adjust these values based on your data
+        const legendSpacing = 25; // Spacing between legend items
+        const legendX = -margin.left + 20; // Position of the legend in the SVG
+        const legendY = (-margin.top / 2) - 10;
+
+        const legend = svg.append("g")
+          .attr("transform", `translate(${legendX}, ${legendY})`);
+
+        // Adds a legend description
+        let legendDescription = svg.append("g");
+        
+        legendDescription.append("text")
+            .attr("class", "legend-description")
+            .text("Climate protest tweets")
+            .attr("x", legendX)
+            .attr("y", legendY - 50)
+            .attr("dy", 20);
+
+          legendDescription.append("text")
+            .attr("class", "legend-description")
+            .text("published in the week")
+            .attr("x", legendX)
+            .attr("y", legendY - 50)
+            .attr("dy", 33);
+
+
+           
+        legend.selectAll("circle")
+          .data(legendValues)
+          .enter()
+          .append("circle")
+          .attr("cy", 0)
+          .attr("cx", (d, i) => i * legendSpacing)
+          .attr("r", d => r(d))
+          .attr("fill", "none")
+          .attr("stroke", "black");
+
+        legend.selectAll("text")
+          .data(legendValues)
+          .enter()
+          .append("text")
+          .attr("y", 20)
+          .attr("x", (d, i) => i * legendSpacing)
+          .attr("dy", 5)
+          .attr("text-anchor", "middle") // Center the text
+          .text(d => `${Math.round(d)}`)
+          .style("font-size", "12px");
+
+          // Color legend
+          const numSteps = 3;
+          const colorValues = [0, .5, 1];
+          const rectWidth = 20;
+          const rectHeight = 15;
+          const colorLegendSpacing = 5;
+          const colorLegendX = innerWidth - 2 * margin.right;
+          const colorLegendY = (-margin.top / 2) - 10;
+
+          // Create a group to hold the color legend elements
+          const colorLegend = svg.append("g")
+            .attr("transform", `translate(${colorLegendX}, ${colorLegendY})`);
+
+        // Adds a legend description
+        let colorLegendDescription = svg.append("g");
+        
+        colorLegendDescription.append("text")
+            .attr("class", "legend-description")
+            .text("Shate of protest tweets with")
+            .attr("x", colorLegendX - 60)
+            .attr("y", colorLegendY - 50)
+            .attr("dy", 20);
+
+        colorLegendDescription.append("text")
+            .attr("class", "legend-description")
+            .text("high engagement rates")
+            .attr("x", colorLegendX - 60)
+            .attr("y", colorLegendY - 50)
+            .attr("dy", 33);
+
+          // Loop through the quantile values and create the color legend
+          for (i = 0; i < numSteps; i++) {
+            // Get the color for the current quantile value using the colorScale
+            const color = colorScale(colorValues[i]);
+
+            // Create a rectangle for each quantile value with the corresponding color
+            colorLegend.append("rect")
+              .attr("x", i * (rectWidth + colorLegendSpacing))
+              .attr("y", 0)
+              .attr("width", rectWidth)
+              .attr("height", rectHeight)
+              .attr("fill", color);
+
+            // Add text elements below each rectangle to display the quantile value
+            colorLegend.append("text")
+              .attr("x", i * (rectWidth + colorLegendSpacing) + (rectWidth / 2))
+              .attr("y", rectHeight + 2)
+              .attr("dy", "0.75em")
+              .attr("dx", 3)
+              .attr("text-anchor", "middle")
+              .text(d3.format(".0%")(colorValues[i]))
+              .style("font-size", "12px");
+          };
+
+
+
+    });
+    </script>
+  </body>
+</html>
