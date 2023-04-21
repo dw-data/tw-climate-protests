@@ -1,5 +1,11 @@
 # Climate Protests in Twitter
 
+Idea: [Serdar Vardar](https://twitter.com/serdarvardar_?lang=en)
+Data analysis and visualization: [Rodrigo Menegat Schuinski](https://twitter.com/RodrigoMenegat)
+Research and writing: [Serdar Vardar](https://twitter.com/serdarvardar_?lang=en)
+
+You can read the story [here](https://www.dw.com/a-65383936)
+
 ## Project overview
 
 This repository contains the source code for DW's story about climate protests on Twitter.
@@ -99,3 +105,7 @@ Source code of the d3.js chart that generate swarmplots showing the distribution
 
 #### viz.greta-thunberg
 Source code of the d3.js chart that shows how Greta Thunberg is mentioned in the majority of high engagement protest tweets.
+
+## Raw data
+
+If you would like to obtain the raw data behind the project, please email data-team[at]dw.com
