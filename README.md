@@ -1,7 +1,9 @@
 # Climate Protests in Twitter
 
 Idea: [Serdar Vardar](https://twitter.com/serdarvardar_?lang=en)
+
 Data analysis and visualization: [Rodrigo Menegat Schuinski](https://twitter.com/RodrigoMenegat)
+
 Research and writing: [Serdar Vardar](https://twitter.com/serdarvardar_?lang=en)
 
 You can read the story [here](https://www.dw.com/a-65383936)
